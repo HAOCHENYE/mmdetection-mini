@@ -3,7 +3,9 @@
 _base_ = [
     '../_base_/default_runtime.py'
 ]
-
+std_batch = 64
+total_batch = 16
+num_gpu = 2
 # model settings
 model = dict(
     type='YOLOV5',
@@ -89,7 +91,7 @@ test_pipeline = [
 ]
 
 data = dict(
-    samples_per_gpu=8,
+    samples_per_gpu=int(total_batch / num_gpu),
     workers_per_gpu=4,
     train=dict(
         type=dataset_type,
@@ -108,17 +110,20 @@ data = dict(
         img_prefix=data_root + 'val2017/',
         pipeline=test_pipeline))
 
-evaluation = dict(interval=10, metric='bbox')
-checkpoint_config = dict(interval=10)
+evaluation = dict(interval=5, metric='bbox')
+checkpoint_config = dict(interval=5)
 
 # optimizer
 optimizer = dict(constructor='CustomOptimizer', type='SGD', lr=0.01, momentum=0.937, nesterov=True)
-optimizer_config = dict(grad_clip=None)
+optimizer_config = dict(type="AccumulateOptimizerHook",
+                        grad_clip=None,
+                        update_iterval=int(std_batch / total_batch),
+                        warm_iter=1000)
 
 # learning policy
 lr_config = dict(policy='OneCycle')
 runner = dict(type='EpochBasedRunner', max_epochs=300)
 
 log_config = dict(interval=30)
-work_dir = "work_dirs/yolov5s_no_clip_world_factor"
-resume_from = None
+work_dir = "work_dirs/yolov5s_no_clip_world_factor_acc_fixed"
+resume_from = "work_dirs/yolov5s_no_clip_world_factor_acc_fixed/latest.pth"

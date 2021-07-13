@@ -6,11 +6,12 @@ import torch
 import torch.nn as nn
 from mmcv.ops import batched_nms
 from mmcv.runner import force_fp32
-
+import os
 from mmdet.core import (multiclass_nms)
 from .yolo_head import YOLOV3Head
 from ..builder import HEADS
 from ..utils import brick as vn_layer
+from mmdet.models.losses import weighted_loss
 
 
 def _make_divisible(x, divisor, width_multiple):
@@ -444,7 +445,7 @@ class YOLOV5Head(YOLOV3Head):
                     [pad_param[2], pad_param[0], pad_param[2], pad_param[0]])
             mlvl_bboxes /= mlvl_bboxes.new_tensor(scale_factor)
 
-        use_torchvision = False
+        use_torchvision = True
         if use_torchvision:
             c = mlvl_pred_map[:, 5:6] * 4096  # classes
             boxes, scores = mlvl_pred_map[:, :4] + c, mlvl_pred_map[:, 4]  # boxes (offset by class), scores
@@ -487,6 +488,8 @@ class ComputeLoss:
         self.nl = 3
         self.nc = model.num_classes
         self.no = model.num_classes+5
+        self.world_factor = int(os.getenv('WORLD_SIZE', 1)) #TODO Be removed
+
 
         # 暂时调整位置
         base_sizes = anchor_generator.base_sizes[::-1]
@@ -543,10 +546,11 @@ class ComputeLoss:
         bs = tobj.shape[0]  # batch size
         loss = lbox + lobj + lcls
         # print(loss.item(), lbox.item(), lobj.item(), lcls.item())
+
         return dict(
-            loss_cls=lcls * bs,
-            loss_conf=lobj * bs,
-            loss_bbox=lbox * bs)
+            loss_cls=lcls * bs * self.world_factor,
+            loss_conf=lobj * bs * self.world_factor,
+            loss_bbox=lbox * bs * self.world_factor)
 
     def build_targets(self, p, gt_bboxes, gt_labels, img_metas):
         # bs

@@ -1,5 +1,6 @@
 import argparse
 import os
+os.chdir("../")
 import os.path as osp
 import time
 import warnings
