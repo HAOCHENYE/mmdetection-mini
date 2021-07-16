@@ -3,7 +3,7 @@ from .auto_augment import (AutoAugment, BrightnessTransform, ColorTransform,
                            Translate)
 from .compose import Compose
 from .formating import (Collect, DefaultFormatBundle, ImageToTensor,
-                        ToDataContainer, ToTensor, Transpose, to_tensor)
+                        ToDataContainer, ToTensor, Transpose, to_tensor, NumpyToTensor)
 from .instaboost import InstaBoost
 from .loading import (LoadAnnotations, LoadImageFromFile, LoadImageFromWebcam,
                       LoadMultiChannelImageFromFiles, LoadProposals)
@@ -12,6 +12,7 @@ from .transforms import (Albu, CutOut, Expand, MinIoURandomCrop, Normalize,
                          Pad, PhotoMetricDistortion, RandomCenterCropPad,
                          RandomCrop, RandomFlip, RandomShift, Resize,
                          SegRescale, LetterResize)
+
 
 __all__ = [
     'Compose', 'to_tensor', 'ToTensor', 'ImageToTensor', 'ToDataContainer',
